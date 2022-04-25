@@ -1,5 +1,3 @@
-from crypt import methods
-from distutils.log import debug
 from flask import Flask,request
 from flask_cors import CORS
 import boto3
@@ -52,17 +50,30 @@ def terminateInstance(id):
 
 
 
-@app.route('/create-instance/<id>', methods = ['POST'])
-def createinstance(id):
+@app.route('/create-instance', methods = ['POST'])
+def createinstance():
         ec2 = boto3.resource(
-        'ec2'
+        'ec2',
+       
         )
         response = ec2.create_instances(
-            ImageId=id,
+            ImageId=request.json['id'],
             MinCount=1,
             MaxCount=1,
-            InstanceType="t2.micro"
+            InstanceType = request.json['instanceType'],
+            TagSpecifications=[
+                {
+                    'ResourceType': 'instance',
+                    'Tags': [
+                        {
+                            'Key': 'Name',
+                            'Value': request.json['name']
+                        },
+                    ]
+                },
+            ],
         )
+       
         return "instance created"
 
 
@@ -70,6 +81,7 @@ def createinstance(id):
 def getS3Buckets():
     s3 = boto3.client(
             's3'
+            
         )
     response = s3.list_buckets()
     return response
